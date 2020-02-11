@@ -6,6 +6,8 @@ import dicom;
 import matplotlib.pyplot as plt;
 import numpy as np;
 from scipy import ndimage;
+from skimage import measure;
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection;
 
 def load_scan(dir):
 
@@ -57,24 +59,48 @@ def change_resolution(image, scan, new_spacing = [1,1,1]):
   # change resolution so that new voxel has volume given in new_spacing
   # get voxel volume (slice thickness, pixel row spacing, pixel col spacing)
   spacing = np.array([scan[0].SliceThickness] + scan[0].PixelSpacing, dtype = np.float32);
-
   resize_factor = spacing / np.array(new_spacing, dtype = np.float32);
   new_resolution = np.round(image.shape * resize_factor[1:]);
   real_resize_factor = new_resolution / image.shape;
   new_spacing[1:] = spacing[1:] / real_resize_factor;
-
   image = ndimage.interpolation.zoom(image, real_resize_factor);
-
   return image, new_spacing;
+
+def make_mesh(images, threshold = -300, step_size = 1):
+
+  p = np.transpose(np.array(images), (2,1,0)); # shape = (width, height, batch)
+  verts, faces, norm, val = measure.marching_cubes_lewiner(p, threshold, step_size = step_size, allow_degenerate = True);
+  return verts, faces;
+
+def plot3d(images, threshold = -300, step_size = 1):
+
+  verts, faces = make_mesh(images, threshold, step_size);
+  x,y,z = zip(*verts);
+  fig = plt.figure(figsize = (10,10));
+  ax = fig.add_subplot(111, projection = '3d');
+  mesh = Poly3DCollection(verts[faces], linewidths = 0.05, alpha = 1);
+  face_color = [1,1,0.9];
+  mesh.set_facecolor(face_color);
+  ax.add_collection3d(mesh);
+  ax.set_xlim(0, max(x));
+  ax.set_ylim(0, max(y));
+  ax.set_zlim(0, max(z));
+  ax.set_facecolor((0.7,0.7,0.7));
+  plt.show();
 
 if __name__ == "__main__":
 
   if len(sys.argv) != 2:
     print("Usage: " + sys.argv[0] + " <directory>");
     exit(1);
+  # load slices from directory
   patient = load_scan(sys.argv[1]);
+  # convert to hu
   imgs = get_pixels_hu(patient);
   show_stack(imgs);
+  # change resolution
   resized_imgs = [change_resolution(img, patient, [1,1,1])[0] for img in imgs];
   show_stack(resized_imgs);
+  # plot static 3d image (takes several minutes)
+  plot3d(imgs);
 
