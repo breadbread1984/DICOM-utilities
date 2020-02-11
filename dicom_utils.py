@@ -8,6 +8,7 @@ import numpy as np;
 from scipy import ndimage;
 from skimage import measure;
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection;
+from plotly.tools import FigureFactory as FF;
 
 def load_scan(dir):
 
@@ -88,6 +89,14 @@ def plot3d(images, threshold = -300, step_size = 1):
   ax.set_facecolor((0.7,0.7,0.7));
   plt.show();
 
+def plot3d_interactive(images, threshold = -300, step_size = 1):
+
+  verts, faces = make_mesh(images, threshold, step_size);
+  x,y,z = zip(*verts);
+  colormap = ['rgb(236,236,212)','rgb(236,236,212)'];
+  fig = FF.create_trisurf(x = x,y = y,z = z,plot_edges = False, colormap = colormap, simplices = faces, backgroundcolor = 'rgb(64,64,64)', title = 'Interactive Visualization');
+  iplot(fig);
+
 if __name__ == "__main__":
 
   if len(sys.argv) != 2:
@@ -101,6 +110,9 @@ if __name__ == "__main__":
   # change resolution
   resized_imgs = [change_resolution(img, patient, [1,1,1])[0] for img in imgs];
   show_stack(resized_imgs);
-  # plot static 3d image (takes several minutes)
+  # plot a static 3d image (it takes several minutes)
   plot3d(imgs);
+  # plot a dynamic 3d image (it takes several minutes)
+  plot3d_interactive(imgs);
+
 
