@@ -8,6 +8,7 @@ import numpy as np;
 from scipy import ndimage;
 from skimage import measure;
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection;
+from plotly.offline import iplot;
 from plotly.tools import FigureFactory as FF;
 
 def load_scan(dir):
