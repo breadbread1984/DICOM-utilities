@@ -1,5 +1,6 @@
 pydicom
 matplotlib
+plotly
 numpy
 scipy
 skimage
